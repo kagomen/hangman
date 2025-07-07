@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "start": "tsc && node dist/main.js"
+  },
+  "devDependencies": {
+    "@tsconfig/node20": "^20.1.6",
+    "@types/node": "^24.0.10",
+    "typescript": "^5.8.3"
+  }
+}
