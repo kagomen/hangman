@@ -1,20 +1,20 @@
-// src/index.ts
-import * as readline from "readline"
-import { hangmanArt } from "./data/hangmanArt"
+import { stdin, stdout } from "process"
+import { createInterface, type Interface } from "readline/promises"
+import { hangmanArt } from "./data/hangmanAA"
 import { words } from "./data/words"
-import { clear, print } from "./utils"
+import { clear, print } from "./utils/console"
 
 export class HangmanGame {
   private readonly correctWord: string = this.getRandomWord() //正解の単語
   private guessedLetters: Set<string> = new Set() //試行済みの文字リスト（重複なし）
   private remainingAttempts: number = hangmanArt.length - 1 //残りの試行回数
   private errorMessage: string = ""
-  private readonly rl: readline.Interface
+  private readonly rl: Interface
 
   constructor() {
-    this.rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
+    this.rl = createInterface({
+      input: stdin,
+      output: stdout,
     })
   }
 
@@ -40,12 +40,13 @@ export class HangmanGame {
     print("=====================")
     print(hangmanArt[hangmanArt.length - 1 - this.remainingAttempts])
     print("\n")
-    print(`単語: ${this.getWordDisplay()}`)
+    print(`単語: ${this.getWordDisplay()} (${this.correctWord.length})`)
     print(`残り試行回数: ${this.remainingAttempts}`)
     print(`推測済みの文字: ${[...this.guessedLetters].join(", ")}`)
     print("\n")
     if (this.errorMessage) {
       print(`* ${this.errorMessage}`, "red")
+      this.errorMessage = "" //表示した後は初期化
     }
   }
 
@@ -59,7 +60,6 @@ export class HangmanGame {
     } else if (this.guessedLetters.has(letter)) {
       this.errorMessage = "その文字は既に推測済みです"
     } else {
-      this.errorMessage = ""
       this.guessedLetters.add(letter)
 
       // 不正解の場合
@@ -69,47 +69,44 @@ export class HangmanGame {
     }
   }
 
-  //ゲームが終了したかチェックする
-  private checkGameEnd(): boolean {
-    // 勝ち判定
+  //ゲーム状況をチェック
+  private checkGameStatus(): "win" | "lose" | "play" {
+    //勝ち
     if (
       this.correctWord
         .split("")
         .every((letter) => this.guessedLetters.has(letter))
     ) {
-      this.displayStatus()
-      print(`[GAME CLEAR] 正解は"${this.correctWord}"でした`, "green")
-      this.rl.close()
-      return true
+      return "win"
     }
 
-    // 負け判定
+    //負け
     if (this.remainingAttempts <= 0) {
-      this.displayStatus()
-      print(`[GAME OVER] 正解は"${this.correctWord}"でした`, "red")
-      this.rl.close()
-      return true
+      return "lose"
     }
-
-    return false
+    //ゲーム中
+    return "play"
   }
 
   //ゲームを開始してループを回す
-  public start(): void {
-    const gameLoop = () => {
+  public async start(): Promise<void> {
+    while (this.checkGameStatus() === "play") {
       this.displayStatus()
-
-      // ゲームが終了している場合、ループを抜ける
-      if (this.checkGameEnd()) {
-        return
-      }
-
-      this.rl.question("アルファベットを1文字入力してください: ", (input) => {
-        this.handleGuess(input)
-        gameLoop()
-      })
+      const input = await this.rl.question(
+        "アルファベット1文字を入力してください："
+      )
+      this.handleGuess(input)
     }
 
-    gameLoop()
+    this.displayStatus()
+
+    if (this.checkGameStatus() === "lose") {
+      print(`[GAME OVER] 正解は"${this.correctWord}"でした`, "red")
+    }
+    if (this.checkGameStatus() === "win") {
+      print(`[GAME CLEAR] 正解は"${this.correctWord}"でした`, "green")
+    }
+
+    this.rl.close()
   }
 }

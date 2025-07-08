@@ -1,4 +1,3 @@
-// src/hangmanArt.ts (左右反転バージョン)
 export const hangmanArt: string[] = [
   `
   +---+
@@ -28,7 +27,7 @@ export const hangmanArt: string[] = [
   +---+
   |   |
   |   O
-  |   |\\
+  |  /|
   |
   |
 =========`,
@@ -45,7 +44,7 @@ export const hangmanArt: string[] = [
   |   |
   |   O
   |  /|\\
-  |     \\
+  |  /
   |
 =========`,
   `
