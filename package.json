@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "tsc && node dist/main.js"
+    "start": "tsc && node dist/index.js"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.6",
