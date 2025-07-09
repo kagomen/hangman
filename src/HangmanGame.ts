@@ -1,11 +1,11 @@
 import { stdin, stdout } from "process"
 import { createInterface, type Interface } from "readline/promises"
 import { hangmanArt } from "./data/hangmanAA"
-import { words } from "./data/words"
 import { GameUI } from "./GameUI"
+import { choiceCorrectWord } from "./utils/choiceCurrentWord"
 
 export class HangmanGame {
-  private readonly correctWord: string = this.getRandomWord() //正解の単語
+  private readonly correctWord: string = choiceCorrectWord() //正解の単語
   private guessedLetters: Set<string> = new Set() //試行済みの文字リスト（重複なし）
   private remainingAttempts: number = hangmanArt.length - 1 //残りの試行回数
   private errorMessage: string = ""
@@ -18,22 +18,8 @@ export class HangmanGame {
     })
   }
 
-  //単語リストからランダムに単語を1つ選択する
-  private getRandomWord(): string {
-    const randomIndex = Math.floor(Math.random() * words.length)
-    return words[randomIndex].toLowerCase()
-  }
-
-  //現在の単語の表示状態を作成する (例: _ a _ a _ a)
-  private getWordDisplay(): string {
-    return this.correctWord
-      .split("")
-      .map((letter) => (this.guessedLetters.has(letter) ? letter : "_"))
-      .join(" ")
-  }
-
-  //ユーザーからの入力を処理する
-  private handleGuess(input: string): void {
+  //ユーザーからの入力を処理する（バリデーション・評価）
+  private evaluate(input: string): "win" | "lose" | "play" {
     const letter = input.toLowerCase().trim()
 
     this.errorMessage = ""
@@ -51,10 +37,7 @@ export class HangmanGame {
         this.remainingAttempts--
       }
     }
-  }
 
-  //ゲーム状況をチェック
-  private checkGameStatus(): "win" | "lose" | "play" {
     //勝ち
     if (
       this.correctWord
@@ -68,35 +51,41 @@ export class HangmanGame {
     if (this.remainingAttempts <= 0) {
       return "lose"
     }
-    //ゲーム中
+
+    //ゲーム続行
     return "play"
   }
 
   //ゲームを開始してループを回す
   public async start(): Promise<void> {
     while (true) {
+      //ゲーム画面の表示
       GameUI.displayStatus(
         this.remainingAttempts,
-        this.getWordDisplay(),
-        this.correctWord.length,
+        this.correctWord,
         this.guessedLetters,
         this.errorMessage
       )
-      const input = await this.rl.question(
+
+      //入力を待機
+      const userInputLetter = await this.rl.question(
         "アルファベット1文字を入力してください："
       )
-      this.handleGuess(input)
 
-      const status = this.checkGameStatus()
-      if (status !== "play") {
+      //入力値の評価
+      const result = this.evaluate(userInputLetter)
+
+      //ゲームが終わればループを抜ける
+      if (result !== "play") {
+        //ゲーム画面を一旦表示してから
         GameUI.displayStatus(
           this.remainingAttempts,
-          this.getWordDisplay(),
-          this.correctWord.length,
+          this.correctWord,
           this.guessedLetters,
           this.errorMessage
         )
-        GameUI.displayResult(status, this.correctWord)
+        //結果表示
+        GameUI.displayResult(result, this.correctWord)
 
         break
       }

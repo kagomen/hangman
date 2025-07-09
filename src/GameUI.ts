@@ -6,8 +6,7 @@ export class GameUI {
   //ゲームの状態を表示する
   static displayStatus(
     remainingAttempts: number,
-    currentWordDisplay: string,
-    correctWordLength: number,
+    correctWord: string,
     guessedLetters: Set<string>,
     errorMessage: string
   ) {
@@ -17,7 +16,11 @@ export class GameUI {
     print("=====================")
     print(hangmanArt[hangmanArt.length - 1 - remainingAttempts])
     print("\n")
-    print(`単語: ${currentWordDisplay} (${correctWordLength}文字)`)
+    print(
+      `単語: ${GameUI.getWordDisplay(correctWord, guessedLetters)} (${
+        correctWord.length
+      }文字)`
+    )
     print(`残り試行回数: ${remainingAttempts}回`)
     print(`推測済みの文字: ${[...guessedLetters].join(", ")}`)
     print("\n")
@@ -32,5 +35,16 @@ export class GameUI {
     } else {
       print(`[GAME OVER] 正解は"${correctWord}"でした`, "red")
     }
+  }
+
+  //現在の単語の表示状態を作成する (例: _ a _ a _ a)
+  static getWordDisplay(
+    correctWord: string,
+    guessedLetters: Set<string>
+  ): string {
+    return correctWord
+      .split("")
+      .map((letter) => (guessedLetters.has(letter) ? letter : "_"))
+      .join(" ")
   }
 }
