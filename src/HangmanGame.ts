@@ -2,6 +2,7 @@ import { stdin, stdout } from "process"
 import { createInterface, type Interface } from "readline/promises"
 import { hangmanArt } from "./data/hangmanAA"
 import { GameUI } from "./GameUI"
+import { GameStatus } from "./types/GameStatus"
 import { choiceCorrectWord } from "./utils/choiceCurrentWord"
 
 export class HangmanGame {
@@ -19,7 +20,7 @@ export class HangmanGame {
   }
 
   //ユーザーからの入力を処理する（バリデーション・評価）
-  private evaluate(input: string): "win" | "lose" | "play" {
+  private evaluate(input: string): GameStatus {
     const letter = input.toLowerCase().trim()
 
     this.errorMessage = ""
@@ -56,9 +57,11 @@ export class HangmanGame {
     return "play"
   }
 
-  //ゲームを開始してループを回す
   public async start(): Promise<void> {
-    while (true) {
+    let status: GameStatus = "play"
+
+    //ゲーム中(status: play)はループを回す
+    while (status === "play") {
       //ゲーム画面の表示
       GameUI.displayStatus(
         this.remainingAttempts,
@@ -72,24 +75,22 @@ export class HangmanGame {
         "アルファベット1文字を入力してください："
       )
 
-      //入力値の評価
-      const result = this.evaluate(userInputLetter)
-
-      //ゲームが終わればループを抜ける
-      if (result !== "play") {
-        //ゲーム画面を一旦表示してから
-        GameUI.displayStatus(
-          this.remainingAttempts,
-          this.correctWord,
-          this.guessedLetters,
-          this.errorMessage
-        )
-        //結果表示
-        GameUI.displayResult(result, this.correctWord)
-
-        break
-      }
+      //入力値を再評価、ゲーム状態を再確認
+      status = this.evaluate(userInputLetter)
     }
+
+    //ゲームが終わればループを抜ける
+    //ゲームの最終画面を表示
+    GameUI.displayStatus(
+      this.remainingAttempts,
+      this.correctWord,
+      this.guessedLetters,
+      this.errorMessage
+    )
+    //結果表示
+    GameUI.displayResult(status, this.correctWord)
+
+    //cli操作を終了
     this.rl.close()
   }
 }
